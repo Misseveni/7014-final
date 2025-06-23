@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Authority Dashboard</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Reports</h5>
+                                <p class="card-text">{{ total_reports }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Verified Reports</h5>
+                                <p class="card-text">{{ verified_reports }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Pending Reports</h5>
+                                <p class="card-text">{{ pending_reports }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Critical Reports</h5>
+                                <p class="card-text">{{ critical_reports }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Aid Requests</h5>
+                                <p class="card-text">{{ total_aid_requests }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Fulfilled Requests</h5>
+                                <p class="card-text">{{ fulfilled_requests }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Pending Requests</h5>
+                                <p class="card-text">{{ pending_requests }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Rescue Requests</h5>
+                                <p class="card-text">{{ rescue_requests }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">Shelter Availability</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="shelterChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">Disaster Type Distribution</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="disasterTypeChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-warning text-white">
+                                <h5 class="mb-0">Latest Disaster Reports</h5>
+                            </div>
+                            <div class="card-body">
+                                {% if latest_reports %}
+                                    <ul class="list-group">
+                                        {% for report in latest_reports %}
+                                            <li class="list-group-item">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>{{ report.get_disaster_type_display }} - {{ report.location }}</span>
+                                                    <span class="badge bg-{% if report.severity == 'CRITICAL' %}danger{% elif report.severity == 'HIGH' %}warning{% elif report.severity == 'MEDIUM' %}info{% else %}success{% endif %}">
+                                                        {{ report.get_severity_display }}
+                                                    </span>
+                                                </div>
+                                                <small>{{ report.timestamp|timesince }} ago</small>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p>No recent reports.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">Active Volunteers</h5>
+                            </div>
+                            <div class="card-body">
+                                {% if active_volunteers %}
+                                    <ul class="list-group">
+                                        {% for volunteer in active_volunteers %}
+                                            <li class="list-group-item">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>{{ volunteer.username }}</span>
+                                                    <span class="badge bg-info">
+                                                        {{ volunteer.volunteer_profile.assigned_tasks_count }} tasks
+                                                    </span>
+                                                </div>
+                                                <small>Skills: {{ volunteer.volunteer_profile.skills.all|join:", " }}</small>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p>No active volunteers at this time.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Shelter availability chart
+    const shelterCtx = document.getElementById('shelterChart').getContext('2d');
+    new Chart(shelterCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Available', 'Full'],
+            datasets: [{
+                label: 'Number of Shelters',
+                data: [{{ available_shelters }}, {{ unavailable_shelters }}],
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(255, 99, 132, 0.7)'
+                ],
+                borderColor: [
+                    'rgb(75, 192, 192)',
+                    'rgb(255, 99, 132)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Disaster type distribution chart
+    const disasterCtx = document.getElementById('disasterTypeChart').getContext('2d');
+    new Chart(disasterCtx, {
+        type: 'pie',
+        data: {
+            labels: [
+                {% for type, count in disaster_types.items %}
+                    '{{ type }}',
+                {% endfor %}
+            ],
+            datasets: [{
+                data: [
+                    {% for type, count in disaster_types.items %}
+                        {{ count }},
+                    {% endfor %}
+                ],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(153, 102, 255, 0.7)',
+                    'rgba(255, 159, 64, 0.7)'
+                ],
+                borderColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                    'rgb(255, 206, 86)',
+                    'rgb(75, 192, 192)',
+                    'rgb(153, 102, 255)',
+                    'rgb(255, 159, 64)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+</script>
+{% endblock %}    

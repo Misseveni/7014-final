@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load math_filters %}
+
+{{ shelter.current_occupancy|div:shelter.capacity|floatformat:2 }}
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Manage Shelters</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'add_shelter' %}" class="btn btn-success mb-4">
+                    <i class="fa fa-plus mr-2"></i>Add New Shelter
+                </a>
+                
+                {% if shelters %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Location</th>
+                                    <th>Capacity</th>
+                                    <th>Current Occupancy</th>
+                                    <th>Status</th>
+                                    <th>Manager</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for shelter in shelters %}
+                                    <tr>
+                                        <td>{{ shelter.name }}</td>
+                                        <td>{{ shelter.address }}</td>
+                                        <td>{{ shelter.capacity }}</td>
+                                        <td>
+                                            <div class="progress">
+                                                <div class="progress-bar" role="progressbar" 
+                                                    style="width: {{ shelter.current_occupancy|div:shelter.capacity|floatformat:2|multiply:100 }}%"
+                                                    aria-valuenow="{{ shelter.current_occupancy }}" 
+                                                    aria-valuemin="0" 
+                                                    aria-valuemax="{{ shelter.capacity }}">
+                                                    {{ shelter.current_occupancy }}/{{ shelter.capacity }}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if shelter.is_available %}
+                                                <span class="badge bg-success">Available</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Full</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ shelter.manager.username|default:"Unassigned" }}</td>
+                                        <td>
+                                            <a href="{% url 'edit_shelter' shelter.id %}" class="btn btn-sm btn-info">Edit</a>
+                                            <button class="btn btn-sm btn-danger">Delete</button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>No shelters found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}    
